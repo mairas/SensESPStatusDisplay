@@ -81,46 +81,35 @@ void SSD1306DisplayController::set_ws_connected() {
                   sensesp_app->get_ws_client()->get_server_address().c_str());
 }
 
-void SSD1306DisplayController::set_input(WifiState new_value,
+void SSD1306DisplayController::set_input(SystemStatus new_value,
                                          uint8_t input_channel) {
   // FIXME: If pointers to member functions would be held in an array,
   // this would be a simple array dereferencing
   switch (new_value) {
-    case kWifiNoAP:
+    case SystemStatus::kWifiNoAP:
       this->set_wifi_no_ap();
       break;
-    case kWifiDisconnected:
+    case SystemStatus::kWifiDisconnected:
       this->set_wifi_disconnected();
       break;
-    case kWifiConnectedToAP:
-      this->set_wifi_connected();
-      break;
-    case kExecutingWifiManager:
+    case SystemStatus::kWifiManagerActivated:
       this->set_wifimanager();
       break;
-    default:
-      this->set_wifi_disconnected();
-      break;
-  }
-}
-
-void SSD1306DisplayController::set_input(WSConnectionState new_value,
-                                         uint8_t input_channel) {
-  switch (new_value) {
-    case kWSDisconnected:
+    case SystemStatus::kWSDisconnected:
+      this->set_wifi_connected();
       this->set_ws_disconnected();
       break;
-    case kWSConnecting:
-      this->set_ws_connecting();
-      break;
-    case kWSAuthorizing:
+    case SystemStatus::kWSAuthorizing:
+      this->set_wifi_connected();
       this->set_ws_authorizing();
       break;
-    case kWSConnected:
-      this->set_ws_connected();
+    case SystemStatus::kWSConnecting:
+      this->set_wifi_connected();
+      this->set_ws_connecting();
       break;
-    default:
-      this->set_ws_disconnected();
+    case SystemStatus::kWSConnected:
+      this->set_wifi_connected();
+      this->set_ws_connected();
       break;
   }
 }

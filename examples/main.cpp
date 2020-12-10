@@ -5,7 +5,7 @@
 #include "sensesp_app_builder.h"
 #include "sensors/analog_input.h"
 #include "signalk/signalk_output.h"
-#include "system/led_controller.h"
+#include "system/system_status_led.h"
 #include "transforms/hysteresis.h"
 
 #define SDA_PIN 21
@@ -16,23 +16,28 @@ ReactESP app([]() {
   SetupSerialDebug(115200);
 #endif
 
-  // this creates an LED blinker controller
-  LedController* led_controller = new LedController(LED_PIN);
-
-  // this creates the SS1306 display controller
-  SSD1306DisplayController* display_controller =
-      new SSD1306DisplayController(SDA_PIN, SCL_PIN);
+  // create an LED blinker controller
+  SystemStatusLed* led = new SystemStatusLed(LED_PIN);
 
   SensESPAppBuilder builder;
 
   sensesp_app = builder.set_hostname("sensespstatusdisplay")
                     ->set_wifi("my-wifi-ssid", "my-wifi-password")
                     ->set_sk_server("skserver.lan", 80)
-                    // these two lines connect the new controllers to 
+                    // these two lines connect the new controllers to
                     // SensESPApp internals
-                    ->add_visual_controller(led_controller)
-                    ->add_visual_controller(display_controller)
+                    ->set_system_status_led(led)
                     ->get_app();
+
+  // create the SS1306 display controller
+  SSD1306DisplayController* display_controller =
+      new SSD1306DisplayController(SDA_PIN, SCL_PIN);
+
+  // wire up the new display controller
+
+  sensesp_app->get_system_status_controller()->connect_to(display_controller);
+  sensesp_app->get_ws_client()->get_delta_count_producer().connect_to(
+      display_controller);
 
   // everything else is just to create some arbitrary data to be output
 
@@ -51,8 +56,8 @@ ReactESP app([]() {
   // or a potentiometer with a voltage divider to get an illustrative test
   // input.
 
-  auto* analog_input =
-      new AnalogInput(analog_pin, read_delay, analog_in_config_path, output_scale);
+  auto* analog_input = new AnalogInput(analog_pin, read_delay,
+                                       analog_in_config_path, output_scale);
 
   // Connect the analog input via a hysteresis transform
   // to an SKOutputBool object. The hysteresis function has arbitrary voltage

@@ -1,17 +1,19 @@
 #ifndef _SSD1306_DISPLAY_H_
 #define _SSD1306_DISPLAY_H_
 
-#include <Wire.h>
 #include <Adafruit_GFX.h>
 #include <Adafruit_SSD1306.h>
+#include <Wire.h>
 
+#include "controllers/system_status_controller.h"
 #include "system/enable.h"
-#include "controllers/visual_output_controller.h"
 
-#define SCREEN_WIDTH 128 // OLED display width, in pixels
-#define SCREEN_HEIGHT 32 // OLED display height, in pixels
+#define SCREEN_WIDTH 128  // OLED display width, in pixels
+#define SCREEN_HEIGHT 32  // OLED display height, in pixels
 
-class SSD1306DisplayController : public VisualOutputController, public Enable {
+class SSD1306DisplayController : public ValueConsumer<SystemStatus>,
+                                 public ValueConsumer<int>,
+                                 public Enable {
  protected:
   TwoWire* i2c;
   Adafruit_SSD1306* display;
@@ -20,7 +22,7 @@ class SSD1306DisplayController : public VisualOutputController, public Enable {
 
   int num_deltas = 0;
   int graph_ptr = 0;
-  
+
   virtual void set_wifi_no_ap();
   virtual void set_wifi_disconnected();
   virtual void set_wifi_connected();
@@ -42,13 +44,8 @@ class SSD1306DisplayController : public VisualOutputController, public Enable {
 
   virtual void enable() override;
 
-  // ValueConsumer interface for ValueConsumer<WifiState> (Networking object
-  // state updates)
-  virtual void set_input(WifiState new_value,
-                         uint8_t input_channel = 0) override;
-  // ValueConsumer interface for ValueConsumer<WSConnectionState>
-  // (WSClient object state updates)
-  virtual void set_input(WSConnectionState new_value,
+  // ValueConsumer interface for ValueConsumer<SystemStatus>
+  virtual void set_input(SystemStatus new_value,
                          uint8_t input_channel = 0) override;
   // ValueConsumer interface for ValueConsumer<int> (delta count producer
   // updates)
@@ -56,6 +53,5 @@ class SSD1306DisplayController : public VisualOutputController, public Enable {
 
   void blip(int duration);
 };
-
 
 #endif
